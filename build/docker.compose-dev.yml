@@ -1,0 +1,19 @@
+version: '0.1'
+
+services:
+
+  api:
+    build: ./../
+    container_name: redes_tcp_udp
+    ports:
+      - "8000:8000"
+      - "8025:8025"
+    environment:
+      - RUST_BACKTRACE=1
+
+  socket:
+    image: spiped:latest
+#    command:
+#      - "spiped -s 'localhost:8025' -t 'localhost:8025'"
+    ports:
+      - "6666:6666"
