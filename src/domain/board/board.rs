@@ -1,5 +1,8 @@
+use crate::domain::{
+    commons::{component::Component, position::Position},
+    tile::{tile::Tile, tile_kind::TileKind},
+};
 use uuid::Uuid;
-use super::{commons::{component::Component, position::Position}, tile::{tile::Tile, tile_kind::TileKind}};
 
 pub struct Board {
     id: Uuid,
@@ -22,7 +25,7 @@ impl Board {
         Board {
             id: Uuid::new_v4(),
             name,
-            tiles
+            tiles,
         }
     }
 }
@@ -41,29 +44,29 @@ impl Board {
     }
 
     pub fn tile_at(&self, p: Position) -> Option<&Tile> {
-        if let Some(item) = self.tiles.get(p.x) {
-            item.get(p.y)
+        if let Some(item) = self.tiles.get(p.x as usize) {
+            item.get(p.y as usize)
         } else {
             None
         }
     }
 
-	pub fn is_inside_horizontaly(&self, p: Position) -> bool {
-		p.x < self.x_limit()
-	}
+    pub fn is_inside_horizontaly(&self, p: Position) -> bool {
+        p.x < self.x_limit() as i32
+    }
 
-	pub fn is_inside_vertically(&self, p: Position) -> bool {
-		p.y < self.y_limit()
-	}
+    pub fn is_inside_vertically(&self, p: Position) -> bool {
+        p.y < self.y_limit() as i32
+    }
 
     pub fn is_inside(&self, p: Position) -> bool {
         self.is_inside_horizontaly(p) && self.is_inside_vertically(p)
     }
-    
-	pub fn has_tile_kind_at(&self, kind: TileKind, p: Position) -> bool {
+
+    pub fn has_tile_kind_at(&self, kind: TileKind, p: Position) -> bool {
         match self.tile_at(p) {
             Some(tile) => tile.kind().eq(&kind),
             None => false,
         }
-	}
+    }
 }
