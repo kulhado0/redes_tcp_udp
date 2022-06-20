@@ -7,6 +7,7 @@ edition = "2021"
 
 [dependencies]
 rocket = "0.4.10"
+phf = { version = "0.10", features = ["macros"] }
 
 [dependencies.uuid]
 version = "1.1.2"
