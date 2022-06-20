@@ -7,14 +7,11 @@ mod domain;
 mod consts;
 
 use domain::commons;
-use consts::game_tiles;
+use consts::tiles;
 
 #[get("/")]
 fn index() -> String {
-    format!("{} {} {}", 
-        game_tiles::BLOCKED.symbol().unwrap(), 
-        game_tiles::POINT_OBJECT.symbol().unwrap(), 
-        game_tiles::POWER_UP.symbol().unwrap())
+    format!("hello")
 }
 
 #[get("/?<x>&<y>")]
