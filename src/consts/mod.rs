@@ -1,1 +1,3 @@
-pub mod game_tiles;
+pub mod tiles;
+pub mod boards;
+pub mod directions;
