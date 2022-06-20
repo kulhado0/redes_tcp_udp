@@ -17,7 +17,7 @@ impl PlayerController {
         p.position = new_position;
     }
 
-    pub fn move_player_when_key_pressed(p: &mut Player, key: &str) {
+    pub fn move_player_on_key_pressed(p: &mut Player, key: &str) {
         if let Some(direction) = directions::KEYS_AND_DIRECTIONS.get(key) {
             Self::move_player(p, direction);
         }
