@@ -1,27 +1,40 @@
-#![feature(proc_macro_hygiene, decl_macro)]
-
-#[macro_use] 
-extern crate rocket;
+#[macro_use] extern crate rocket;
 
 mod domain;
 mod consts;
 
-use domain::commons;
-use consts::tiles;
+use domain::{player::{player::Player, players_manager::PlayersManager}, board::{board::Board, board_creator::BoardCreator}};
+use consts::{boards};
+use rocket::{serde::json::Json, State};
 
 #[get("/")]
 fn index() -> String {
     format!("hello")
 }
 
-#[get("/?<x>&<y>")]
-fn tile_symbol(x: usize, y: usize) -> String {
-    format!("({x}, {y})")
+#[get("/")]
+fn players(manager: &State<PlayersManager>) -> Json<&[Player]> {
+    Json(manager.players())
 }
 
-fn main() {
-    rocket::ignite()
+#[get("/")]
+fn board(board: &State<Board>) -> Json<&Board> {
+    Json(board)
+}
+
+#[launch]
+fn rocket() -> _ {
+    let tile_symbols = boards::DEFAULT_BOARD_TILE_SYMBOLS
+        .map(|slice| slice.to_vec());
+
+    let board = BoardCreator::create_from(&tile_symbols);
+
+    let players_manager = PlayersManager::new(10);
+
+    rocket::build()
+        .manage(board)
+        .manage(players_manager)
         .mount("/", routes![index])
-        .mount("/tile-symbol", routes![tile_symbol])
-        .launch();
+        .mount("/players", routes![players])
+        .mount("/board", routes![board])
 }
