@@ -1,6 +1,9 @@
+use serde::{Serialize, Deserialize};
+
 use super::tile_kind::TileKind;
 use crate::domain::commons::position::Position;
 
+#[derive(Serialize, Deserialize)]
 pub struct Tile {
     kind: TileKind,
     position: Position,
