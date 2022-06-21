@@ -1,18 +1,21 @@
 use crate::domain::{
-    commons::{component::Component, position::Position},
+    commons::{position::Position, component::Component, serializable_uuid},
     tile::{tile::Tile, tile_kind::TileKind},
 };
+use serde::{Serialize, Deserialize};
 use uuid::Uuid;
 
+#[derive(Serialize, Deserialize)]
 pub struct Board {
+    #[serde(with = "serializable_uuid")]
     id: Uuid,
     name: String,
     tiles: Vec<Vec<Tile>>,
 }
 
 impl Component for Board {
-    fn id(&self) -> Uuid {
-        self.id
+    fn id(&self) -> &Uuid {
+        &self.id
     }
 
     fn name<'a>(&'a self) -> &'a str {

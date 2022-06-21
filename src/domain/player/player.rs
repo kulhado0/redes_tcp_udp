@@ -1,10 +1,15 @@
+use rocket::serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-use crate::domain::commons::{position::Position, component::Component};
+use crate::domain::commons::{
+    position::Position, serializable_uuid, component::Component,
+};
 
 use super::player_mode::PlayerMode;
 
+#[derive(Serialize, Deserialize)]
 pub struct Player {
+    #[serde(with = "serializable_uuid")]
     id: Uuid,
     name: String,
     pub position: Position,
@@ -13,13 +18,14 @@ pub struct Player {
 }
 
 impl Component for Player {
-    fn id(&self) -> Uuid {
-        self.id
+    fn id(&self) -> &Uuid {
+        &self.id
     }
 
     fn name<'a>(&'a self) -> &'a str {
         self.name.as_str()
     }
+
 }
 
 impl Player {
