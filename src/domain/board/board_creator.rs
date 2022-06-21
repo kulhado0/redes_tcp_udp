@@ -1,5 +1,3 @@
-use uuid::Uuid;
-
 use crate::{domain::{tile::tile::Tile, commons::position::Position}, consts::tiles};
 
 use super::board::Board;
@@ -26,7 +24,6 @@ impl BoardCreator {
 			tiles.push(new_row);
 		}
 
-		let board_name = format!("board_{}", Uuid::new_v4());
-		Board::new(board_name, tiles)
+		Board::new("board0".to_string(), tiles)
 	}
 }
