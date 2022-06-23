@@ -7,7 +7,7 @@ use crate::domain::commons::{
 
 use super::player_mode::PlayerMode;
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct Player {
     #[serde(with = "serializable_uuid")]
     id: Uuid,

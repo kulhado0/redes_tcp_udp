@@ -5,7 +5,7 @@ use crate::domain::{
 use serde::{Serialize, Deserialize};
 use uuid::Uuid;
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct Board {
     #[serde(with = "serializable_uuid")]
     id: Uuid,

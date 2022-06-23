@@ -3,7 +3,7 @@ use serde::{Serialize, Deserialize};
 use super::tile_kind::TileKind;
 use crate::domain::commons::position::Position;
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct Tile {
     kind: TileKind,
     position: Position,
