@@ -1,4 +1,6 @@
-use crate::consts::{directions, boards};
+use uuid::Uuid;
+
+use crate::{domain::commons::component::Component};
 
 use super::{player::Player, direction::Direction};
 
@@ -23,8 +25,24 @@ impl PlayersManager {
         &self.players
     }
 
-    pub fn move_player(&self, p: &mut Player, direction: &Direction) {
-        let mut new_position = p.position;
+    fn get_player(&mut self, id: &Uuid) -> Option<&mut Player> {
+        self.players.iter_mut().find(|p| p.id().eq(id))
+    }
+
+    pub fn get_player_with_id(&self, id: &Uuid) -> Option<&Player> {
+        self.players.iter().find(|p| p.id().eq(id))
+    }
+
+    pub fn move_player(&mut self, player_id: &Uuid, direction: &Direction) -> Result<(), String> {
+        let player = self.get_player(player_id);
+
+        if let None = player {
+            return Err(format!("There is no player with id = {}", player_id));
+        }
+
+        let player = player.unwrap();
+
+        let mut new_position = player.position;
 
         match direction {
             Direction::Up(value) | Direction::Down(value) => new_position.y += value,
@@ -32,12 +50,8 @@ impl PlayersManager {
             _ => ()
         }
 
-        p.position = new_position;
-    }
+        player.position = new_position;
 
-    pub fn move_player_on_key_pressed(&self, p: &mut Player, key: &str) {
-        if let Some(direction) = directions::KEYS_AND_DIRECTIONS.get(key) {
-            self.move_player(p, direction);
-        }
+        Ok(())
     }
 }
