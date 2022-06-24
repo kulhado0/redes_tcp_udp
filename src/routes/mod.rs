@@ -1,2 +1,2 @@
-pub mod players;
-pub mod route;
+pub mod player;
+pub mod board;
