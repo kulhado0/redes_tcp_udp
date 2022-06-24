@@ -51,7 +51,6 @@ impl PlayersManager {
         }
 
         if self.board.is_inside(new_position) {
-            println!("inside: {new_position}");
             player.position = new_position;
             return Ok(());
         }

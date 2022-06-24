@@ -36,9 +36,11 @@ fn rocket() -> _ {
         .mount("/", routes![index])
         .mount("/players", routes![
             routes::player::get_all_players,
+            routes::player::get_player_by_id,
             routes::player::move_player,
         ])
         .mount("/board", routes![
-            routes::board::get_default_board
+            routes::board::get_default_board,
+            routes::board::get_default_board_tiles,
         ])
 }
