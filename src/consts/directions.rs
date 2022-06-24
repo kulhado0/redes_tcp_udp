@@ -12,3 +12,10 @@ pub static KEYS_AND_DIRECTIONS: phf::Map<&'static str, Direction> = phf_map! {
     "ArrowLeft" => LEFT,
     "ArrowRight" => RIGHT,
 };
+
+pub static REPRESENTATIONS_AND_DIRECTIONS: phf::Map<&'static str, Direction> = phf_map! {
+    "Up" => UP,
+    "Down" => DOWN,
+    "Left" => LEFT,
+    "Right" => RIGHT,
+};

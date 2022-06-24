@@ -40,10 +40,10 @@ fn move_player(
     infos: Json<MovePlayerInfos>,
     manager: &State<RwLock<PlayersManager>>,
 ) -> Result<Json<Player>, String> {
-    let direction = directions::KEYS_AND_DIRECTIONS.get(&infos.0.key);
+    let direction = directions::REPRESENTATIONS_AND_DIRECTIONS.get(&infos.0.direction);
 
     if let None = direction {
-        let valid_keys = directions::KEYS_AND_DIRECTIONS
+        let valid_keys = directions::REPRESENTATIONS_AND_DIRECTIONS
             .keys()
             .map(|k| *k)
             .collect::<Vec<&'static str>>()
@@ -54,13 +54,13 @@ fn move_player(
 
     let mut manager = manager.write().expect("lock failed in move_player");
 
-    let result = manager.move_player(&infos.0.id, &direction.unwrap());
+    let result = manager.move_player(&infos.0.player_id, &direction.unwrap());
 
     if let Err(error) = result {
         return Err(error);
     }
 
-    Ok(Json(manager.get_player_with_id(&infos.0.id).unwrap().clone()))
+    Ok(Json(manager.get_player_with_id(&infos.0.player_id).unwrap().clone()))
 }
 
 #[launch]
