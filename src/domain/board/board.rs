@@ -55,11 +55,11 @@ impl Board {
     }
 
     pub fn is_inside_horizontaly(&self, p: Position) -> bool {
-        p.x < self.x_limit() as i32
+        p.x < self.x_limit() as i32 && p.x >= 0
     }
 
     pub fn is_inside_vertically(&self, p: Position) -> bool {
-        p.y < self.y_limit() as i32
+        p.y < self.y_limit() as i32 && p.y >= 0
     }
 
     pub fn is_inside(&self, p: Position) -> bool {
