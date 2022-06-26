@@ -71,6 +71,10 @@ fn wait_and_handle_messages(
 
         match stream.read(&mut data) {
             Ok(size) => {
+                if size == 0 {
+                    return;
+                }
+
                 let stream_data = String::from_utf8_lossy(&data);
 
                 let json = serde_json::from_str::<MovePlayerInfos>(&stream_data)
