@@ -1,3 +1,4 @@
+use serde::{Serialize, Deserialize};
 use uuid::Uuid;
 
 use crate::domain::commons::{component::Component, position::Position, serializable_uuid};
@@ -25,10 +26,10 @@ impl Component for Player {
 }
 
 impl Player {
-    pub fn new(name: String) -> Self {
+    pub fn new(name: &str) -> Self {
         Player {
             id: Uuid::new_v4(),
-            name,
+            name: name.to_owned(),
             mode: PlayerMode::Normal,
             position: Position { x: 0, y: 0 },
             punctuation: 0,

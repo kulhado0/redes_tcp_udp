@@ -10,15 +10,9 @@ pub struct PlayersManager {
 }
 
 impl PlayersManager {
-    pub fn new(number_of_players: u32, board: &Board) -> Self {
-        let mut players = Vec::with_capacity(number_of_players as usize);
-
-        for i in 0..number_of_players {
-            players.push(Player::new(format!("player{i}")))
-        }
-
+    pub fn new(board: &Board) -> Self {
         PlayersManager {
-            players,
+            players: Vec::new(),
             board: board.clone(),
         }
     }
@@ -31,6 +25,10 @@ impl PlayersManager {
 
     pub fn get_player_with_id(&self, id: &Uuid) -> Option<&Player> {
         self.players.iter().find(|p| p.id().eq(id))
+    }
+
+    pub fn add_player(&mut self, player: Player) {
+        self.players.push(player);
     }
 
     pub fn move_player(&mut self, player_id: &Uuid, direction: &Direction) -> Result<(), String> {

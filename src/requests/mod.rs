@@ -1,1 +1,1 @@
-pub mod move_player_infos;
+pub mod on_move_message;

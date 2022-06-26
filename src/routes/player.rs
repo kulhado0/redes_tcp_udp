@@ -5,7 +5,7 @@ use uuid::Uuid;
 use crate::{
     consts::directions,
     domain::player::{player::Player, players_manager::PlayersManager},
-    requests::move_player_infos::MovePlayerInfos,
+    requests::on_move_message::MovePlayerInfos,
 };
 
 pub fn get_all_players(manager: &RwLock<PlayersManager>) -> Vec<Player> {
@@ -36,8 +36,8 @@ pub fn get_player_by_id(id: String, manager: &RwLock<PlayersManager>) -> Result<
 }
 
 pub fn move_player(
-    infos: MovePlayerInfos,
-    manager: &RwLock<PlayersManager>,
+    infos: &MovePlayerInfos,
+    manager: &mut PlayersManager,
 ) -> Result<Player, String> {
     let direction = directions::REPRESENTATIONS_AND_DIRECTIONS.get(&infos.direction);
 
@@ -50,8 +50,6 @@ pub fn move_player(
 
         return Err(format!("Invalid key. Valid keys: {valid_keys}"));
     }
-
-    let mut manager = manager.write().expect("lock failed in move_player");
 
     let player = manager.get_player_with_id(&infos.player_id);
 
