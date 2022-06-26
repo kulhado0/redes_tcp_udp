@@ -1,9 +1,6 @@
-use rocket::serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-use crate::domain::commons::{
-    position::Position, serializable_uuid, component::Component,
-};
+use crate::domain::commons::{component::Component, position::Position, serializable_uuid};
 
 use super::player_mode::PlayerMode;
 
@@ -25,7 +22,6 @@ impl Component for Player {
     fn name<'a>(&'a self) -> &'a str {
         self.name.as_str()
     }
-
 }
 
 impl Player {

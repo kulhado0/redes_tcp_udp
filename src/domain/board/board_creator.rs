@@ -8,7 +8,7 @@ use super::board::Board;
 pub struct BoardCreator;
 
 impl BoardCreator {
-    pub fn create_from(tile_symbols_matrix: &[Vec<char>], name: &str) -> Board {
+    pub fn create_from(tile_symbols_matrix: Vec<Vec<char>>, name: &str) -> Board {
         let mut tiles = Vec::with_capacity(tile_symbols_matrix.len());
 
         for row_index in 0..tile_symbols_matrix.len() {
