@@ -45,7 +45,7 @@ fn handle_new_connection(
 
     for header in BufReader::new(&mut stream).lines() {
         let header = header.unwrap();
-        if header == "\r" {
+        if header.len() == 0 {
             break;
         }
     }
@@ -70,21 +70,24 @@ fn handle_new_connection(
         return;
     }
 
-    let json = json.unwrap() + "\r\n";
+    let json = json.unwrap();
 
-    let write_result = stream.write_all(json.as_bytes());
+    let response = format!(
+        "HTTP/1.1 200 OK\r\nContent-Length: {}\r\n\r\n{}",
+        json.len(),
+        json
+    );
+
+    let write_result = stream.write_all(response.as_bytes());
 
     if let Err(_) = write_result {
         eprintln!("Failed to write response on stream");
         return;
     }
 
-    let write_result = stream.write_all(b"\r\n");
+    stream.flush().unwrap();
 
-    if let Err(_) = write_result {
-        eprintln!("Failed to write response on stream");
-        return;
-    }
+    println!("Stream flushed, data sent to client");
 
     drop(players_manager_lock);
     drop(board_lock);
