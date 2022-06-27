@@ -6,9 +6,9 @@ mod routes;
 
 use std::{
     cell::RefCell,
-    io::Read,
     io::Write,
-    net::{Shutdown, TcpListener, TcpStream},
+    io::{BufRead, BufReader},
+    net::{TcpListener, TcpStream},
     sync::{Arc, Mutex},
     thread,
 };
@@ -24,21 +24,38 @@ use crate::{
 };
 
 fn handle_new_connection(
-    stream: &mut TcpStream,
+    mut stream: TcpStream,
     players_manager: Arc<Mutex<RefCell<PlayersManager>>>,
     board: Arc<Mutex<Board>>,
 ) {
-    let players_manager_lock = players_manager
-        .lock()
-        .expect("Failed to lock manager in new connection");
+    let players_manager_lock = players_manager.lock();
 
-    let board_lock = board
-        .lock()
-        .expect("Failed to lock board in new connection");
+    if let Err(_) = players_manager_lock {
+        eprintln!("Failed to lock players manager");
+        return;
+    }
+
+    let board_lock = board.lock();
+
+    if let Err(_) = board_lock {
+        eprintln!("Failed to lock board");
+        return;
+    }
+
+    for header in BufReader::new(&mut stream).lines() {
+        let header = header.unwrap();
+        if header == "\r" {
+            break;
+        }
+        println!("header: {header}");
+    }
+
+    stream.write_all(b"HTTP/1.1 200 OK\r\n\r\n").unwrap();
 
     let player_name = &stream.peer_addr().unwrap().to_string();
 
-    println!("on new connection: new player name: {}", player_name);
+    let players_manager_lock = players_manager_lock.unwrap();
+    let board_lock = board_lock.unwrap();
 
     let players = (*players_manager_lock).borrow().players().to_vec();
     let new_player = Player::new(player_name);
@@ -48,14 +65,22 @@ fn handle_new_connection(
         .add_player(new_player.clone());
 
     let response = ConnectionEstablished::new((*board_lock).clone(), players, new_player.clone());
-    let json = serde_json::to_string(&response).expect("Failed to serialize response");
+    let json = serde_json::to_string(&response);
 
-    println!("response: {}", json);
+    if let Err(_) = json {
+        eprintln!("Failed to serialize response");
+        return;
+    }
 
-    stream
-        .write(json.as_bytes())
-        .expect("Failed to write response on stream");
-    
+    let json = json.unwrap();
+
+    let write_result = stream.write_all(json.as_bytes());
+
+    if let Err(_) = write_result {
+        eprintln!("Failed to write response on stream");
+        return;
+    }
+
     drop(players_manager_lock);
     drop(board_lock);
 
@@ -63,37 +88,69 @@ fn handle_new_connection(
 }
 
 fn wait_and_handle_messages(
-    stream: &mut TcpStream,
+    stream: TcpStream,
     players_manager: Arc<Mutex<RefCell<PlayersManager>>>,
 ) {
+    let stream = Arc::new(Mutex::new(RefCell::new(stream)));
+
     loop {
-        let mut data = [0u8; 1024];
+        let stream_lock = stream.lock();
 
-        match stream.read(&mut data) {
-            Ok(size) => {
-                if size == 0 {
-                    return;
-                }
+        if let Err(_) = stream_lock {
+            eprintln!("Failed to lock stream");
+            continue;
+        }
 
-                let stream_data = String::from_utf8_lossy(&data);
+        let stream = stream_lock.unwrap();
 
-                let json = serde_json::from_str::<MovePlayerInfos>(&stream_data)
-                    .expect("Failed to deserialize message");
-
-                let mut players_manager = players_manager
-                    .lock()
-                    .expect("Failed to lock players_manager");
-
-                routes::player::move_player(&json, players_manager.get_mut())
-                    .expect("Failed to move player");
-
-                stream.write(&data[0..size])
-                    .expect("Failed to write bytes to stream");
+        for line in BufReader::new(&*stream.borrow_mut()).lines() {
+            if let Err(e) = line {
+                eprintln!("Error while trying to read stream content. Error: {e}");
+                continue;
             }
-            Err(_) => {
-                println!("An error occurred with {}", stream.peer_addr().unwrap());
 
-                stream.shutdown(Shutdown::Both).unwrap();
+            let line = line.unwrap();
+
+            if line.len() == 0 {
+                continue;
+            }
+
+            println!("line: {}", line);
+
+            let json = serde_json::from_str::<MovePlayerInfos>(&line);
+
+            if let Err(_) = json {
+                eprintln!("Failed to deserialize message");
+                continue;
+            }
+
+            let players_manager_lock = players_manager.lock();
+
+            if let Err(_) = players_manager_lock {
+                eprintln!("Failed to lock players_manager");
+                continue;
+            }
+
+            let mut players_manager_lock = players_manager_lock.unwrap();
+
+            let move_result = routes::player::move_player(
+                &json.unwrap(),
+                players_manager_lock.get_mut(),
+            );
+
+            if let Err(_) = move_result {
+                eprintln!("Failed to move player");
+                continue;
+            }
+
+            let json = serde_json::to_string(&move_result.unwrap()).unwrap();
+
+            let write_result = stream.borrow_mut()
+                .write_all(json.as_bytes());
+
+            if let Err(_) = write_result {
+                eprintln!("Failed to write bytes to stream");
+                continue;
             }
         }
     }
@@ -117,14 +174,14 @@ fn main() {
 
     for stream in tcp_listener.incoming() {
         match stream {
-            Ok(mut stream) => {
+            Ok(stream) => {
                 println!("New connection: {}", stream.peer_addr().unwrap());
 
                 let players_manager = Arc::clone(&players_manager);
                 let board = Arc::clone(&board);
 
                 thread::spawn(move || {
-                    handle_new_connection(&mut stream, players_manager, board);
+                    handle_new_connection(stream, players_manager, board);
                 });
             }
             Err(e) => {
