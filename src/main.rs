@@ -124,6 +124,13 @@ fn wait_and_handle_messages(
                 continue;
             }
 
+            let parsing_result = String::from_utf8(line.as_bytes().to_vec());
+
+            if let Err(_) = parsing_result {
+                eprintln!("Failed to parse message");
+                continue;
+            }
+
             let players_manager_lock = players_manager.lock();
 
             if let Err(_) = players_manager_lock {
