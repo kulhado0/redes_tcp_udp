@@ -44,7 +44,12 @@ fn handle_new_connection(
     }
 
     for header in BufReader::new(&mut stream).lines() {
+        if let Err(_) = header {
+            continue;
+        } 
+
         let header = header.unwrap();
+
         if header.len() == 0 {
             break;
         }
