@@ -57,13 +57,16 @@ pub fn move_player(
         return Err(format!("There is no player with id = {}", &infos.player_id));
     }
 
-    let player = player.unwrap().clone();
-
     let result = manager.move_player(&infos.player_id, &direction.unwrap());
 
     if let Err(error) = result {
         return Err(error);
     }
+
+    let player = manager
+        .get_player_with_id(&infos.player_id)
+        .unwrap()
+        .clone();
 
     Ok(player)
 }
