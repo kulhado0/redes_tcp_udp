@@ -9,6 +9,7 @@ use std::{
     io::Write,
     io::{BufRead, BufReader},
     net::{TcpListener, TcpStream},
+    rc::Rc,
     sync::{Arc, Mutex},
     thread,
 };
@@ -47,10 +48,7 @@ fn handle_new_connection(
         if header == "\r" {
             break;
         }
-        println!("header: {header}");
     }
-
-    stream.write_all(b"HTTP/1.1 200 OK\r\n\r\n").unwrap();
 
     let player_name = &stream.peer_addr().unwrap().to_string();
 
@@ -72,9 +70,16 @@ fn handle_new_connection(
         return;
     }
 
-    let json = json.unwrap();
+    let json = json.unwrap() + "\r\n";
 
     let write_result = stream.write_all(json.as_bytes());
+
+    if let Err(_) = write_result {
+        eprintln!("Failed to write response on stream");
+        return;
+    }
+
+    let write_result = stream.write_all(b"\r\n");
 
     if let Err(_) = write_result {
         eprintln!("Failed to write response on stream");
@@ -88,22 +93,16 @@ fn handle_new_connection(
 }
 
 fn wait_and_handle_messages(
-    stream: TcpStream,
+    mut stream: TcpStream,
     players_manager: Arc<Mutex<RefCell<PlayersManager>>>,
 ) {
-    let stream = Arc::new(Mutex::new(RefCell::new(stream)));
+    let cloned_stream = stream.try_clone().unwrap();
+    let cloned_stream = Rc::new(RefCell::new(cloned_stream));
 
     loop {
-        let stream_lock = stream.lock();
+        let cloned_stream = Rc::clone(&cloned_stream);
 
-        if let Err(_) = stream_lock {
-            eprintln!("Failed to lock stream");
-            continue;
-        }
-
-        let stream = stream_lock.unwrap();
-
-        for line in BufReader::new(&*stream.borrow_mut()).lines() {
+        for line in BufReader::new(&mut stream).lines() {
             if let Err(e) = line {
                 eprintln!("Error while trying to read stream content. Error: {e}");
                 continue;
@@ -111,16 +110,9 @@ fn wait_and_handle_messages(
 
             let line = line.unwrap();
 
+            println!("line: {line}");
+
             if line.len() == 0 {
-                continue;
-            }
-
-            println!("line: {}", line);
-
-            let json = serde_json::from_str::<MovePlayerInfos>(&line);
-
-            if let Err(_) = json {
-                eprintln!("Failed to deserialize message");
                 continue;
             }
 
@@ -132,27 +124,38 @@ fn wait_and_handle_messages(
             }
 
             let mut players_manager_lock = players_manager_lock.unwrap();
+            let mut cloned_stream = cloned_stream.borrow_mut();
 
-            let move_result = routes::player::move_player(
-                &json.unwrap(),
-                players_manager_lock.get_mut(),
-            );
+            parse_line_and_write_to_stream(&line, players_manager_lock.get_mut(), &mut cloned_stream);
 
-            if let Err(_) = move_result {
-                eprintln!("Failed to move player");
-                continue;
-            }
-
-            let json = serde_json::to_string(&move_result.unwrap()).unwrap();
-
-            let write_result = stream.borrow_mut()
-                .write_all(json.as_bytes());
-
-            if let Err(_) = write_result {
-                eprintln!("Failed to write bytes to stream");
-                continue;
-            }
+            drop(players_manager_lock);
         }
+    }
+}
+
+fn parse_line_and_write_to_stream(
+    line: &str,
+    players_manager: &mut PlayersManager,
+    stream: &mut TcpStream,
+) {
+    let json = serde_json::from_str::<MovePlayerInfos>(&line);
+
+    if let Err(_) = json {
+        eprintln!("Failed to deserialize message");
+    }
+
+    let move_result = routes::player::move_player(&json.unwrap(), players_manager);
+
+    if let Err(_) = move_result {
+        eprintln!("Failed to move player");
+    }
+
+    let json = serde_json::to_string(&move_result.unwrap()).unwrap() + "\r\n";
+
+    let write_result = stream.write_all(json.as_bytes());
+
+    if let Err(_) = write_result {
+        eprintln!("Failed to write bytes to stream");
     }
 }
 
